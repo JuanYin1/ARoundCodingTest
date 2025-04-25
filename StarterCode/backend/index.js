@@ -2,11 +2,16 @@ const express = require('express');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000; // 5000 (5000 doest work in my device)
 
 app.use(express.json());
 
 //implement the CORS config
+const cors = require("cors");
+app.use(cors({
+    origin: 'http://localhost:3001', // my frondend port is 3001
+    credentials: true // if you use cookies or authentication
+  }));
 
 //products array
 let products = [
@@ -25,12 +30,30 @@ const fetchImageUrl = () => {
 
 //implement the get api for getting products
 app.get('/api/products', (req, res) => {
-
+    const pWithImage = products.map(product => {
+        return {
+            ...product,
+            imageUrl: fetchImageUrl()
+        };
+    })
+    console.log('Updated products with image URLs:', pWithImage);
+    res.json(pWithImage);
 });
 
 //implement the delete api for deleting a product by Id
 app.delete('/api/products/:id', (req, res) => {
-    
+    const id = parseInt(req.params.id);
+    const found = products.findIndex(p => p.id === id)
+    if (found === -1) {
+        // To console
+        console.error(`Product with id=${id} not found`);
+        // To Postman
+        return res.status(404).json({ error: `Product with id=${id} not found` });
+    }
+    products.slice(found, 1);
+    res.json({ message: 'Product deleted successfully' });
+    console.log('Product', id , 'deleted successfully' );
+    console.log('now there are', products.length,'in the product list' );
 });
 
 app.listen(PORT, () => {
